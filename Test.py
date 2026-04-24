@@ -1,39 +1,37 @@
 import streamlit as st
-import google.generativeai as genai
+from g4f.client import Client
 
-# Lấy Key từ mục Secrets bảo mật của Streamlit Cloud
-try:
-    api_key = st.secrets["GOOGLE_API_KEY"]
-    genai.configure(api_key=api_key)
-except:
-    st.error("Chưa cấu hình API Key trong phần Secrets!")
+# Khởi tạo Client không cần Key
+client = Client()
 
-st.set_page_config(page_title="AI Văn Học Chuẩn 100%", page_icon="📚")
-st.title("📚 Trợ Lý Văn Học Chuyên Sâu (Bản Chính Xác)")
+st.set_page_config(page_title="Trợ Lý Văn Học Chuẩn", page_icon="📚")
+st.title("📚 Trợ Lý Văn Học (Bản Fix Lỗi)")
 
-noi_dung = st.text_area("Dán đoạn văn cần phân tích vào đây:", height=300)
+noi_dung = st.text_area("Dán đoạn văn cần phân tích:", height=300, placeholder="Nhập văn bản tại đây...")
 
 if st.button("🚀 Phân tích chính xác"):
     if not noi_dung:
-        st.warning("Bạn chưa nhập nội dung!")
+        st.warning("Vui lòng nhập nội dung!")
     else:
-        with st.spinner("AI đang đối soát dữ liệu văn học..."):
+        with st.spinner("AI đang đọc kỹ để tránh nhầm lẫn tác phẩm..."):
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                
-                # Prompt này là "lệnh cưỡng chế" để AI không được nhầm lẫn
+                # Prompt này ép AI phải phân tích đúng chi tiết văn bản
                 prompt = f"""
-                Bạn là một giáo viên dạy văn cấp 3 xuất sắc. 
+                Bạn là một chuyên gia phê bình văn học Việt Nam.
                 Nhiệm vụ: Phân tích đoạn trích sau: "{noi_dung}"
-                Quy tắc nghiêm ngặt: 
-                1. Tuyệt đối không được nhầm lẫn sang tác phẩm khác. Nếu là Lão Hạc thì chỉ nói về Lão Hạc, Chí Phèo chỉ nói về Chí Phèo.
-                2. Phân tích chi tiết các từ ngữ, hình ảnh, biện pháp tu từ có TRONG ĐOẠN TRÍCH.
-                3. Nêu bật giá trị nhân đạo và nghệ thuật miêu tả tâm lý.
-                4. Nếu không rõ tác phẩm, hãy phân tích dựa trên nội dung chữ đã cung cấp, không tự đoán mò tác giả.
+                Yêu cầu nghiêm ngặt:
+                1. Xác định đúng tác phẩm và tác giả. Không được nhầm lẫn nhân vật.
+                2. Phân tích dựa trên các từ ngữ cụ thể trong đoạn trích.
+                3. Nêu bật nghệ thuật đặc sắc và tâm trạng nhân vật.
                 """
                 
-                response = model.generate_content(prompt)
-                st.markdown(response.text)
-                st.success("Đã hoàn tất phân tích bám sát văn bản!")
+                response = client.chat.completions.create(
+                    model="gpt-4", # Hoặc gpt-3.5-turbo nếu gpt-4 chậm
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                
+                ket_qua = response.choices[0].message.content
+                st.markdown(ket_qua)
+                st.success("Đã hoàn tất phân tích bám sát nội dung!")
             except Exception as e:
-                st.error("Lỗi hệ thống hoặc API Key hết hạn. Hãy kiểm tra lại phần Secrets.")
+                st.error("Server đang bận một chút, bạn hãy nhấn lại nút nhé!")
