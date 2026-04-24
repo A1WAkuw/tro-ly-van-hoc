@@ -1,32 +1,34 @@
 import streamlit as st
-import requests
+from duckduckgo_search import DDGS
 
-# Sử dụng một API endpoint miễn phí và công khai (Serverless)
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
+st.set_page_config(page_title="Trợ Lý Văn Học Chuyên Sâu", page_icon="📚")
 
-st.set_page_config(page_title="Trợ Lý Văn Học Chuẩn", page_icon="📖")
-st.title("📖 Trợ Lý Văn Học Chuyên Sâu")
-st.caption("Phiên bản sửa lỗi ảo giác - Phân tích chính xác tác phẩm")
+st.title("📚 Trợ Lý Văn Học (Phiên bản Ổn Định)")
+st.caption("Sử dụng AI cao cấp để phân tích tác phẩm chính xác")
 
-noi_dung = st.text_area("Dán đoạn văn cần phân tích:", height=300, placeholder="Ví dụ: Đoạn trích Lão Hạc...")
+# Ô nhập liệu
+noi_dung = st.text_area("Dán đoạn văn cần phân tích:", height=300)
 
-if st.button("🚀 Phân tích ngay"):
+if st.button("🚀 Bắt đầu phân tích"):
     if not noi_dung:
-        st.error("Bạn chưa nhập nội dung!")
+        st.warning("Vui lòng nhập nội dung trước!")
     else:
-        with st.spinner("AI đang đọc kỹ tác phẩm để tránh nhầm lẫn..."):
+        with st.spinner("AI đang suy nghĩ kỹ để tránh nhầm lẫn..."):
             try:
-                # Prompt được tối ưu để AI không 'chém gió' sang tác phẩm khác
-                prompt = f"<s>[INST] Bạn là chuyên gia văn học Việt Nam. Hãy phân tích đoạn văn sau một cách chính xác, tuyệt đối không nhầm lẫn nhân vật: {noi_dung} [/INST]</s>"
+                # Prompt yêu cầu AI tập trung tối đa vào văn bản
+                prompt = f"""
+                Bạn là một chuyên gia phê bình văn học Việt Nam giàu kinh nghiệm.
+                Nhiệm vụ: Phân tích sâu sắc đoạn trích sau: "{noi_dung}"
+                Yêu cầu:
+                1. Phải xác định chính xác tên tác phẩm và tác giả. Không được nhầm lẫn nhân vật (ví dụ: không nhầm Lão Hạc sang Chí Phèo).
+                2. Phân tích các biện pháp nghệ thuật và tâm trạng nhân vật bám sát văn bản.
+                3. Trình bày bằng Markdown chuyên nghiệp, dễ đọc.
+                """
                 
-                # Gửi yêu cầu đi (Không cần Key nếu dùng lượng vừa phải)
-                response = requests.post(API_URL, json={"inputs": prompt})
-                result = response.json()
-                
-                if isinstance(result, list):
-                    st.markdown(result[0]['generated_text'].split("[/INST]</s>")[-1])
-                    st.success("Đã hoàn thành phân tích!")
-                else:
-                    st.error("AI đang nghỉ ngơi một chút, bạn bấm nút lại lần nữa nhé!")
-            except:
-                st.error("Có lỗi kết nối. Hãy thử lại sau vài giây.")
+                # Gọi AI miễn phí thông qua DuckDuckGo (Dùng model GPT-4o-mini hoặc Claude-3)
+                with DDGS() as ddgs:
+                    response = ddgs.chat(prompt, model='gpt-4o-mini')
+                    st.markdown(response)
+                    st.success("Đã hoàn tất phân tích chính xác!")
+            except Exception as e:
+                st.error("Server AI đang bận một chút, bạn hãy nhấn lại nút phân tích nhé!")
